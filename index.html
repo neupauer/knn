@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K-Nearest Neighbors Algorithm</title>
+
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+    <script src="./knn.js"></script>
+  </head>
+  <body>
+    <div class="container mx-auto px-8 mt-12">
+      <h1
+        class="text-3xl tracking-tight leading-10 font-extrabold text-gray-900 sm:text-4xl sm:leading-none md:text-4xl"
+      >
+        K-Nearest Neighbors Algorithm Visualization
+      </h1>
+
+      <div class="mt-12">
+        <div class="grid grid-cols-12 gap-4">
+          <div class="col-span-12 lg:col-span-8">
+            <canvas id="chart" class="w-full h-64"></canvas>
+          </div>
+
+          <div class="col-span-12 lg:col-span-4">
+            <form id="formClassA">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="class_A_x">
+                Class A
+              </label>
+              <div class="grid grid-cols-3 gap-3">
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="class_A_x"
+                  type="number"
+                  step="0.1"
+                  placeholder="X"
+                />
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="class_A_y"
+                  type="number"
+                  step="0.1"
+                  placeholder="Y"
+                />
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                  ADD
+                </button>
+              </div>
+            </form>
+
+            <form class="mt-6" id="formClassB">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="class_B_x">
+                Class B
+              </label>
+              <div class="grid grid-cols-3 gap-3">
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="class_B_x"
+                  type="number"
+                  step="0.1"
+                  placeholder="X"
+                />
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="class_B_y"
+                  type="number"
+                  step="0.1"
+                  placeholder="Y"
+                />
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                  ADD
+                </button>
+              </div>
+            </form>
+
+            <form class="mt-6" id="formSample">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="sample_x">
+                Sample
+              </label>
+              <div class="grid grid-cols-3 gap-3">
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="sample_x"
+                  type="number"
+                  step="0.1"
+                  placeholder="X"
+                />
+                <input
+                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="sample_y"
+                  type="number"
+                  step="0.1"
+                  placeholder="Y"
+                />
+                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                  SET
+                </button>
+              </div>
+            </form>
+
+            <form class="mt-6" id="formK">
+              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="k">
+                K
+              </label>
+              <div class="grid grid-cols-12 gap-3">
+                <input
+                  class="appearance-none block col-span-3 bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                  id="k"
+                  type="number"
+                  value="3"
+                  min="1"
+                  max="99"
+                  placeholder="K"
+                />
+
+                <button
+                  type="submit"
+                  class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded col-span-9"
+                >
+                  CLASSIFY SAMPLE
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-12 text-center py-12">
+      <div>
+        Created by
+        <a href="https://neupauer.sk/" class="text-indigo-500 hover:text-indigo-600">Peter Neupauer</a>
+      </div>
+
+      <div class="mt-2">
+        <a href="https://github.com/neupauer/knn" class="text-indigo-500 hover:text-indigo-600">GitHub Code</a>
+      </div>
+    </footer>
+
+    <script>
+      var ctx = document.getElementById("chart").getContext("2d");
+      const classAData = [
+        { x: 303, y: 3 },
+        { x: 298, y: 3 },
+        { x: 277, y: 3 },
+        { x: 299, y: 3 },
+        { x: 303, y: 4 },
+        { x: 309, y: 3 },
+        { x: 311, y: 3 },
+        { x: 302, y: 3 },
+      ];
+      const classBData = [
+        { x: 370, y: 1 },
+        { x: 377, y: 4 },
+        { x: 382, y: 1 },
+        { x: 374, y: 4 },
+        { x: 359, y: 1 },
+        { x: 366, y: 1 },
+        { x: 373, y: 4 },
+        { x: 371, y: 3 },
+      ];
+      let sampleData = [{ x: 350, y: 2 }];
+
+      document.querySelector("#formClassA").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const x = +document.getElementById("class_A_x").value;
+        const y = +document.getElementById("class_A_y").value;
+        if (!(x && y)) return;
+        classAData.push({ x: x, y: y });
+        render();
+      });
+
+      document.querySelector("#formClassB").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const x = +document.getElementById("class_B_x").value;
+        const y = +document.getElementById("class_B_y").value;
+        if (!(x && y)) return;
+        classBData.push({ x: x, y: y });
+        render();
+      });
+
+      document.querySelector("#formSample").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const x = +document.getElementById("sample_x").value;
+        const y = +document.getElementById("sample_y").value;
+        if (!(x && y)) return;
+        sampleData = [{ x: x, y: y }];
+        render();
+      });
+      document.querySelector("#formK").addEventListener("submit", function (e) {
+        e.preventDefault();
+        runClassify();
+      });
+
+      const chart = new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [
+            {
+              label: "Class A",
+              data: classAData,
+              backgroundColor: "#68d391",
+            },
+            {
+              label: "Class B",
+              data: classBData,
+              backgroundColor: "#63b3ed",
+            },
+            {
+              label: "Sample",
+              data: sampleData,
+              backgroundColor: "#fc8181",
+            },
+          ],
+        },
+        options: {
+          scales: {
+            xAxes: [
+              {
+                type: "linear",
+                position: "bottom",
+              },
+            ],
+          },
+        },
+      });
+
+      function render() {
+        chart.data.datasets.forEach((dataset) => {
+          if (dataset.label == "Class A") {
+            dataset.data = classAData;
+          } else if (dataset.label == "Class B") {
+            dataset.data = classBData;
+          } else if (dataset.label == "Sample") {
+            dataset.data = sampleData;
+          }
+        });
+        chart.update();
+      }
+
+      function runClassify() {
+        const k = +document.getElementById("k").value;
+        const dataset = [];
+
+        classAData.forEach((item) => {
+          dataset.push([item.x, item.y, "Class A"]);
+        });
+
+        classBData.forEach((item) => {
+          dataset.push([item.x, item.y, "Class B"]);
+        });
+
+        const input = [sampleData[0].x, sampleData[0].y];
+
+        const result = window.classifyInput(dataset, k, input);
+
+        alert(result);
+      }
+    </script>
+  </body>
+</html>
